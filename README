@@ -1,0 +1,20 @@
+The spitool has been born from my growing annoyance wehen trying to fiddle
+with an SPI EEPROM on my bus pirate. Apparently there are no working tools
+out there to write an EEPROM, reading only worked after patching a perl
+script, verifying/status word access was not there either, etc. As a con-
+sequence, this tool is tailored to my needs, and might or might not fit
+yours.
+
+Feature overview:
+
+This spitool can
+- dump EEPROMs, as hex dump to the display or to a file
+- verify (compare) an EEPROM
+- wipe an EEPROM (initialize with FFs)
+- write an EEPROM from file (wither overwriting fully, or only updating 
+  changes)
+- read and write the status word
+- can run the serial port at extended speeds of 230400, 460800, 1M and 2M baud
+- in theory, it can log SPI traffic (though I only had limited success)
+
+spitool requires popt as only external dependency.
