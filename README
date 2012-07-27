@@ -1,4 +1,4 @@
-The spitool has been born from my growing annoyance wehen trying to fiddle
+The spitool has been born from my growing annoyance when trying to fiddle
 with an SPI EEPROM on my bus pirate. Apparently there are no working tools
 out there to write an EEPROM, reading only worked after patching a perl
 script, verifying/status word access was not there either, etc. As a con-
