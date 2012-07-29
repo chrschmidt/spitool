@@ -46,7 +46,40 @@ static void hexdump (int length, uint8_t * buffer) {
     }
 }
 
-static uint8_t * read_file (bp_state_t * bp, spitool_action_t * action) {
+
+static int _spitool_verify (bp_state_t * bp, spitool_action_t * action, uint8_t * buffer) {
+    int result;
+
+    printf ("Verifying EEPROM..."); fflush (stdout);
+    switch ((result = bp_spi_eeprom_verify (bp, action->start, action->length,
+                                            action->device.addresslength, buffer))) {
+    case 0: printf (" Successfully verified.\n"); break;
+    case 1: printf (" Difference encountered.\n"); break;
+    default: printf (" Error occured.\n"); break;
+    }
+
+    return result;
+}
+
+static uint8_t * _spitool_read_eeprom (bp_state_t * bp, spitool_action_t * action) {
+    uint8_t * buffer;
+
+    if (!(buffer = malloc (action->length)))
+        return NULL;
+
+    printf ("Reading EEPROM...."); fflush (stdout);
+    if (bp_spi_eeprom_read (bp, action->start, action->length, action->device.addresslength,
+                            buffer)) {
+        free (buffer);
+        printf (" Error occured.\n");
+        return NULL;
+    }
+    printf (" Done.\n");
+
+    return buffer;
+}
+
+static uint8_t * _spitool_read_file (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
     FILE * infile;
     size_t result;
@@ -72,43 +105,11 @@ static uint8_t * read_file (bp_state_t * bp, spitool_action_t * action) {
     return buffer;
 }
 
-static int _spitool_verify (bp_state_t * bp, spitool_action_t * action, uint8_t * buffer) {
-    int result;
-
-    printf ("Verifying EEPROM..."); fflush (stdout);
-    switch ((result = bp_spi_eeprom_verify (bp, action->start, action->length,
-                                            action->device.addresslength, buffer))) {
-    case 0: printf (" Successfully verified.\n"); break;
-    case 1: printf (" Difference encountered.\n"); break;
-    default: printf (" Error occured.\n"); break;
-    }
-
-    return result;
-}
-
-static uint8_t * _spitool_readeeprom (bp_state_t * bp, spitool_action_t * action) {
-    uint8_t * buffer;
-
-    if (!(buffer = malloc (action->length)))
-        return NULL;
-
-    printf ("Reading EEPROM...."); fflush (stdout);
-    if (bp_spi_eeprom_read (bp, action->start, action->length, action->device.addresslength,
-                            buffer)) {
-        free (buffer);
-        printf (" Error occured.\n");
-        return NULL;
-    }
-    printf (" Done.\n");
-
-    return buffer;
-}
-
 static int spitool_dump (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
     FILE * outfile;
 
-    if (!(buffer = _spitool_readeeprom (bp, action)))
+    if (!(buffer = _spitool_read_eeprom (bp, action)))
         return 1;
 
     if (!action->filename) {
@@ -127,7 +128,7 @@ static int spitool_verify (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
     size_t result;
 
-    if (!(buffer = read_file (bp, action)))
+    if (!(buffer = _spitool_read_file (bp, action)))
         return 1;
 
     result = _spitool_verify (bp, action, buffer);
@@ -142,11 +143,12 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
     size_t result;
 
-    if (!(buffer = read_file (bp, action)))
+    if (!(buffer = _spitool_read_file (bp, action)))
         return 1;
 
     printf ("Writing EEPROM..."); fflush (stdout);
-    if ((result = bp_spi_eeprom_write (bp, action->start, action->length, action->device.addresslength,
+    if ((result = bp_spi_eeprom_write (bp, action->start, action->length,
+                                       action->device.addresslength,
                                        action->device.sectorsize, buffer)))
         printf (" Failed.\n");
     else
@@ -167,15 +169,15 @@ static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
     int i, j;
     int update;
 
-    if (!(buffer1 = read_file (bp, action)))
+    if (!(buffer1 = _spitool_read_file (bp, action)))
         return 1;
     if (!(buffer2 = _spitool_readeeprom (bp, action))) {
         free (buffer1);
         return 1;
     }
 
-    if (bp_spi_eeprom_read (bp, 0, action->device.capacity, action->device.addresslength,
-                             buffer2)) {
+    if (bp_spi_eeprom_read (bp, 0, action->device.capacity,
+                            action->device.addresslength, buffer2)) {
         fprintf (stderr, "Failed to read %d bytes from device\n", (int)action->length);
         free (buffer1);
         free (buffer2);
