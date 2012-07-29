@@ -30,8 +30,6 @@
 #include "buspirate.h"
 #include "spitool_cmdline.h"
 
-char flags [] = "AOVP";
-
 void hexdump (int length, uint8_t * buffer) {
     int i;
     for (i=0; i<length; i++)

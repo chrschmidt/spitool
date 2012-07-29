@@ -36,6 +36,21 @@ static const bp_device_t spi_devices [] = {
 #endif
 
 static int parse_flags (const char * flags, int * output) {
+    if (!strcmp (flags, "help")) {
+	printf ("Valid Flags:\n");
+	printf ("================================================================================\n");
+	printf ("AUX Pin Control:            a Output Low (0)       A Output High (1) (default)\n");
+	printf ("                            @ Input (Z, High Impedance)\n");
+	printf ("  Note: Specifying a or A before @ will define the state during CS toggle\n");
+	printf ("Voltage Regulators Control: v Off                  V On (default)\n");
+	printf ("Pullup Control:             p Off                  P On (default)\n");
+	printf ("Output Level Control:       h 0V/Hi-Z (Default)    H 0V/+3.3V\n");
+	printf ("CS Pin Control:             c Active Low (default) C Active High\n");
+	printf ("SPI Clock Idle Polarity:    i Low (default)        I High\n");
+	printf ("SPI Sampling Control:       s Middle (default)     S End\n");
+	printf ("SPI Output Clock Edge:      o Idle to Active       O Active to Idle (default)\n");
+	return 1;
+    }
     while (*flags) {
         switch (*(flags++)) {
         case '@': *output |= BPSPICFGAUXINPUT; break;
