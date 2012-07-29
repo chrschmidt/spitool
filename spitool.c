@@ -171,16 +171,8 @@ static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
 
     if (!(buffer1 = _spitool_read_file (bp, action)))
         return 1;
-    if (!(buffer2 = _spitool_readeeprom (bp, action))) {
+    if (!(buffer2 = _spitool_read_eeprom (bp, action))) {
         free (buffer1);
-        return 1;
-    }
-
-    if (bp_spi_eeprom_read (bp, 0, action->device.capacity,
-                            action->device.addresslength, buffer2)) {
-        fprintf (stderr, "Failed to read %d bytes from device\n", (int)action->length);
-        free (buffer1);
-        free (buffer2);
         return 1;
     }
 
@@ -219,11 +211,9 @@ static int spitool_wipe (bp_state_t * bp, spitool_action_t * action) {
     int i, j;
     int erase;
 
-    if (!(buffer = malloc (action->device.capacity)))
+    if (!(buffer = _spitool_read_eeprom (bp, action)))
         return 1;
 
-    bp_spi_eeprom_read (bp, 0, action->device.capacity, action->device.addresslength,
-                        buffer);
     for (i=0; i<action->device.capacity; i+=action->device.sectorsize) {
         erase = 0;
         for (j=0; j<action->device.sectorsize; j++) {
