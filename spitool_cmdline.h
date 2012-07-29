@@ -29,7 +29,7 @@ enum SPITOOLCMDFLAGS {
     CFNEEDSS   = 0x0004,      // Command requires Sector Size info
     CFNEEDFILE = 0x0008,      // Command requires a filename for input/output
     CFNEEDARG  = 0x0010,      // Command requires an argument
-    CFOPTARG   = 0x0020       // Command can have an argument
+    CFOPTARG   = 0x0020       // Command can have (an) argument(s)
 };
 
 typedef struct spitool_command_s spitool_command_t;
@@ -39,7 +39,7 @@ typedef struct spitool_action_s {
     int start;
     size_t length;
     int verify;
-    const char * arg;
+    const char ** arg;
     bp_device_t device;
     const spitool_command_t * command;
 } spitool_action_t;

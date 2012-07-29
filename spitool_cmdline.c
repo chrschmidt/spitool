@@ -275,17 +275,12 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
         poptPrintUsage (optcon, stderr, 0);
         goto errout;
     }
+    action->arg = poptGetArgs (optcon);
 
-    if (action->command->flags & CFNEEDARG) {
-        action->arg = poptGetArg (optcon);
-        if (!action->arg) {
-            fprintf (stderr, "Command %s needs an argument, but none supplied.\n",
-                     action->command->commandname);
-            goto errout;
-        }
-    }
-    if (action->command->flags & CFOPTARG) {
-        action->arg = poptGetArg (optcon);
+    if (action->command->flags & CFNEEDARG && (!action->arg || !action->arg[0])) {
+        fprintf (stderr, "Command %s needs an argument, but none supplied.\n",
+                 action->command->commandname);
+        goto errout;
     }
     if (action->command->flags & CFNEEDDS && !action->device.capacity) {
         fprintf (stderr, "Command %s needs device capacity information.\n",

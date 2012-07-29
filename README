@@ -10,9 +10,9 @@ Feature overview:
 This spitool can
 - dump EEPROMs, as hex dump to the display or to a file
 - verify (compare) an EEPROM
-- wipe an EEPROM (initialize with FFs)
 - write an EEPROM from file (either overwriting fully, or only updating 
   changes)
+- wipe an EEPROM (initialize with a constant value)
 - read and write the status word
 - can run the serial port at extended speeds of 230400, 460800, 1M and 2M baud
 - in theory, it can log SPI traffic (though I only had limited success)

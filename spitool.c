@@ -162,10 +162,10 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     if (mode == 2) {
         buffer1 = buffer2;
         buffer2 = NULL;
-        if (action->arg) {
-            wipeval = strtoul (action->arg, NULL, 0);
+        if (action->arg[0]) {
+            wipeval = strtoul (action->arg[0], NULL, 0);
             if (errno || wipeval > 255) {
-                fprintf (stderr, "Parameter %s is invalid for wipe.\n", action->arg);
+                fprintf (stderr, "Parameter %s is invalid for wipe.\n", action->arg[0]);
                 return 1;
             }
         }
@@ -227,12 +227,12 @@ static int spitool_rdsr (bp_state_t * bp, spitool_action_t * action) {
 }
 
 static int spitool_wrsr (bp_state_t * bp, spitool_action_t * action) {
-    unsigned int parameter;
+    unsigned long parameter;
 
     errno = 0;
-    parameter = strtoul (action->arg, NULL, 0);
+    parameter = strtoul (action->arg[0], NULL, 0);
     if (errno || parameter > 255) {
-        fprintf (stderr, "Parameter %s is invalid for wrsr.\n", action->arg);
+        fprintf (stderr, "Parameter %s is invalid for wrsr.\n", action->arg[0]);
         return 1;
     }
     if (bp_spi_eeprom_wrsr (bp, parameter))
