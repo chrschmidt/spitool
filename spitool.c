@@ -30,10 +30,11 @@
 #include "buspirate.h"
 #include "spitool_cmdline.h"
 
-void hexdump (int length, uint8_t * buffer) {
+static void hexdump (int length, uint8_t * buffer) {
     int i, j;
 
     for (i=0; i<length; i+=16) {
+        printf ("%08X: ", i);
         for (j=0; i+j<length && j<16; j++)
             printf ("%02X ", buffer[i+j]);
         if (j<16)

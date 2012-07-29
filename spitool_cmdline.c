@@ -193,8 +193,8 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
     spitool_action_t * action;
     int intarg;
     const struct poptOption cmdlineopts [] = {
-        { "clockspeed", 'c', POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT, &intarg, 'c',
-          "SPI clock speed in kHz", "<30, 125, 250, 1000, 2000, 2600, 4000, 8000>" },
+        { "clockspeed", 'c', POPT_ARG_INT, &intarg, 'c',
+          "SPI clock speed in kHz", NULL },
         { "flags", 'a', POPT_ARG_STRING, NULL, 'a',
           "SPI operation flags", "[@aAcChHiIoOpPsSvV|help]" },
         { "port", 'p', POPT_ARG_STRING, NULL, 'p',
@@ -277,11 +277,6 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
             goto errout;
         }
     }
-    if (action->command->flags & CFNEEDAS && !action->device.addresslength) {
-        fprintf (stderr, "Command %s needs SPI address length information.\n",
-                 action->command->commandname);
-        goto errout;
-    }
     if (action->command->flags & CFNEEDDS && !action->device.capacity) {
         fprintf (stderr, "Command %s needs device capacity information.\n",
                  action->command->commandname);
@@ -291,6 +286,17 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
         fprintf (stderr, "Command %s needs device sector size information.\n",
                  action->command->commandname);
         goto errout;
+    }
+    if (action->command->flags & CFNEEDAS && !action->device.addresslength) {
+        if (!action->device.capacity) {
+            fprintf (stderr, "Command %s needs SPI address length information, and no capacity given.\n",
+                     action->command->commandname);
+            goto errout;
+        }
+        if (action->device.capacity < 257) action->device.addresslength = 1;
+        else if (!action->device.capacity < 65537) action->device.addresslength = 2;
+        else if (!action->device.capacity < 16777216) action->device.addresslength = 3;
+        else action->device.addresslength = 4;
     }
     if (action->command->flags & CFNEEDFILE && !action->filename) {
         fprintf (stderr, "Command %s needs a filename for I/O.\n",
