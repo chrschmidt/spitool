@@ -46,25 +46,30 @@ static void hexdump (int length, uint8_t * buffer) {
     }
 }
 
-static int spitool_dump (bp_state_t * bp, spitool_action_t * action) {
+static uint8_t * read_file (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
-    FILE * outfile;
+    FILE * infile;
+    size_t result;
 
     if (!(buffer = malloc (action->length)))
-        return 1;
+        return NULL;
 
-    bp_spi_eeprom_read (bp, action->start, action->length, action->device.addresslength,
-                        buffer);
-    if (!action->filename) {
-        hexdump (action->length, buffer);
-    } else {
-        if ((outfile = fopen (action->filename, "w+"))) {
-            fwrite (buffer, action->length, 1, outfile);
-            fclose (outfile);
-        }
+    if (!(infile = fopen (action->filename, "r"))) {
+        fprintf (stderr, "Can't open file %s", action->filename);
+        perror ("");
+        free (buffer);
+        return NULL;
     }
-    free (buffer);
-    return 0;
+
+    result = fread (buffer, sizeof (uint8_t), action->length, infile);
+    fclose (infile);
+    if (result != action->length) {
+        fprintf (stderr, "Failed to read %d bytes from %s\n", (int)action->length, action->filename);
+        free (buffer);
+        return NULL;
+    }
+
+    return buffer;
 }
 
 static int _spitool_verify (bp_state_t * bp, spitool_action_t * action, uint8_t * buffer) {
@@ -81,28 +86,49 @@ static int _spitool_verify (bp_state_t * bp, spitool_action_t * action, uint8_t 
     return result;
 }
 
-static int spitool_verify (bp_state_t * bp, spitool_action_t * action) {
+static uint8_t * _spitool_readeeprom (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
-    FILE * infile;
-    size_t result;
 
     if (!(buffer = malloc (action->length)))
+        return NULL;
+
+    printf ("Reading EEPROM...."); fflush (stdout);
+    if (bp_spi_eeprom_read (bp, action->start, action->length, action->device.addresslength,
+                            buffer)) {
+        free (buffer);
+        printf (" Error occured.\n");
+        return NULL;
+    }
+    printf (" Done.\n");
+
+    return buffer;
+}
+
+static int spitool_dump (bp_state_t * bp, spitool_action_t * action) {
+    uint8_t * buffer;
+    FILE * outfile;
+
+    if (!(buffer = _spitool_readeeprom (bp, action)))
         return 1;
 
-    if (!(infile = fopen (action->filename, "r"))) {
-        fprintf (stderr, "Can't open file %s", action->filename);
-        perror ("");
-        free (buffer);
-        return 1;
+    if (!action->filename) {
+        hexdump (action->length, buffer);
+    } else {
+        if ((outfile = fopen (action->filename, "w+"))) {
+            fwrite (buffer, action->length, 1, outfile);
+            fclose (outfile);
+        }
     }
+    free (buffer);
+    return 0;
+}
 
-    result = fread (buffer, sizeof (uint8_t), action->length, infile);
-    fclose (infile);
-    if (result != action->length) {
-        fprintf (stderr, "Failed to read %d bytes from %s\n", (int)action->length, action->filename);
-        free (buffer);
+static int spitool_verify (bp_state_t * bp, spitool_action_t * action) {
+    uint8_t * buffer;
+    size_t result;
+
+    if (!(buffer = read_file (bp, action)))
         return 1;
-    }
 
     result = _spitool_verify (bp, action, buffer);
 
@@ -114,26 +140,10 @@ static int spitool_verify (bp_state_t * bp, spitool_action_t * action) {
 
 static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer;
-    FILE * infile;
     size_t result;
 
-    if (!(buffer = malloc (action->length)))
+    if (!(buffer = read_file (bp, action)))
         return 1;
-
-    if (!(infile = fopen (action->filename, "r"))) {
-        fprintf (stderr, "Can't open file %s", action->filename);
-        perror ("");
-        free (buffer);
-        return 1;
-    }
-
-    result = fread (buffer, sizeof (uint8_t), action->length, infile);
-    fclose (infile);
-    if (result != action->length) {
-        fprintf (stderr, "Failed to read %d bytes from %s\n", (int)action->length, action->filename);
-        free (buffer);
-        return 1;
-    }
 
     printf ("Writing EEPROM..."); fflush (stdout);
     if ((result = bp_spi_eeprom_write (bp, action->start, action->length, action->device.addresslength,
@@ -152,31 +162,18 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
 }
 
 static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
-    uint8_t * buffer1, * buffer2;
-    FILE * infile;
-    size_t result;
+    uint8_t * buffer1, * buffer2 = NULL;
+    size_t result = 0;
     int i, j;
     int update;
 
-    if (!(buffer1 = malloc (action->length)) || !(buffer2 = malloc (action->length)))
+    if (!(buffer1 = read_file (bp, action)))
         return 1;
-
-    if (!(infile = fopen (action->filename, "r"))) {
-        fprintf (stderr, "Can't open file %s", action->filename);
-        perror ("");
+    if (!(buffer2 = _spitool_readeeprom (bp, action))) {
         free (buffer1);
-        free (buffer2);
         return 1;
     }
 
-    result = fread (buffer1, sizeof (uint8_t), action->length, infile);
-    fclose (infile);
-    if (result != action->length) {
-        fprintf (stderr, "Failed to read %d bytes from %s\n", (int)action->length, action->filename);
-        free (buffer1);
-        free (buffer2);
-        return 1;
-    }
     if (bp_spi_eeprom_read (bp, 0, action->device.capacity, action->device.addresslength,
                              buffer2)) {
         fprintf (stderr, "Failed to read %d bytes from device\n", (int)action->length);
@@ -203,6 +200,7 @@ static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
             printf ("\n");
         }
     }
+    printf ("Done.\n");
 
     if (!result && action->verify)
         result = _spitool_verify (bp, action, buffer1);

@@ -23,7 +23,7 @@ Serial port setup
 
 The serial port setup has two options, -p/--port and -P/--portspeed.
 
-The first receives a string which is the name of the serial associated 
+The first receives a string which is the name of the serial associated
 with the bus pirate. It defaults to /dev/ttyUSB0, and thus is optional
 if it already matches what your bus pirate receives.
 
@@ -45,19 +45,19 @@ Generic SPI setup
 
 The SPI setup has two options, -c/--clockspeed and -a/--flags.
 
-The first parameter is the SPI clock rate. Valid values are 30, 125, 
-250, 1000, 2000, 2600 (2666), 4000, 8000. These values reflect the 
+The first parameter is the SPI clock rate. Valid values are 30, 125,
+250, 1000, 2000, 2600 (2666), 4000, 8000. These values reflect the
 resulting SPI clock in kHz. The default is 1000.
-Note that in my tests for no reason at all bitrates turn out slower 
+Note that in my tests for no reason at all bitrates turn out slower
 after the 2000...
 
-The flags control the other aspects of the SPI communication. The 
+The flags control the other aspects of the SPI communication. The
 details can be retrieved with -a help or --flags=help:
 
-AUX Pin Control:            a Output Low (0)       A Output High (1) 
+AUX Pin Control:            a Output Low (0)       A Output High (1)
 (default)
                             @ Input (Z, High Impedance)
-  Note: Specifying a or A before @ will define the state during CS 
+  Note: Specifying a or A before @ will define the state during CS
 toggle
 Voltage Regulators Control: v Off                  V On (default)
 Pullup Control:             p Off (default)        P On
@@ -67,18 +67,18 @@ SPI Clock Idle Polarity:    i Low (default)        I High
 SPI Sampling Control:       s Middle (default)     S End
 SPI Output Clock Edge:      o Idle to Active       O Active to Idle (default)
 
-To summarize the defaults: AUX is driven high, Power is on, Pullup 
-resistors are off, output is active 0V/3.3V, the CS pin is active low, 
-the clock idles at low, input is sampled in the middle of a clock cycle, 
+To summarize the defaults: AUX is driven high, Power is on, Pullup
+resistors are off, output is active 0V/3.3V, the CS pin is active low,
+the clock idles at low, input is sampled in the middle of a clock cycle,
 and output changes on active to idle clock transition.
 
 Device setup
 ============
 
-This tool currently is meant to read and write EEPROMs. This is done 
+This tool currently is meant to read and write EEPROMs. This is done
 with three specific parameters:
 
---as for the number of address bytes for a command. If not specified, 
+--as for the number of address bytes for a command. If not specified,
 this is guessed from the device capacity:
 1 for devices up to 256 bytes,
 2 for devices from 257 to 64k bytes,
@@ -88,11 +88,11 @@ Use --as if your devices deviates from this rule.
 
 --ds is the device size in bytes. No k/M shortcuts at the moment, sorry.
 
---ss is the sector size in bytes. This is needed for write operations, 
+--ss is the sector size in bytes. This is needed for write operations,
 since you can only write full sectors at once.
 
-If your device is hardcoded in the device table, you can use -d 
-<devicename>. Use -d list to list currently supported devices, and send 
+If your device is hardcoded in the device table, you can use -d
+<devicename>. Use -d list to list currently supported devices, and send
 me the data if yours is not there ;)
 
 Other optional parameters
@@ -104,17 +104,17 @@ Commands
 ========
 
 dump
-The "dump" command reads the device and writes it to a file if a 
+The "dump" command reads the device and writes it to a file if a
 filename is given, or as a hexdump to stdout.
 
 program
-The "program" command reads a file and writes its contents to the 
-EEPROM. Only the first <devicesize> bytes are used. Optionally, the 
-content can be automatically verified after programming. Note that the 
+The "program" command reads a file and writes its contents to the
+EEPROM. Only the first <devicesize> bytes are used. Optionally, the
+content can be automatically verified after programming. Note that the
 full EEPROM is written!
 
 update
-The "update" command behaves just like the "program" command, just that 
+The "update" command behaves just like the "program" command, just that
 it reads the original EEPROM content and only writes data that differs.
 
 verify
@@ -125,15 +125,14 @@ wipe
 The "wipe" command initializes the full EEPROM to 255 (0xFF).
 
 rdsr
-The "rdsr" command reads the EEPROM's status register. This can be 
+The "rdsr" command reads the EEPROM's status register. This can be
 useful to test e.g. if write protect bits are on.
 
 wrsr
-The "wrsr" command write its argument into the EEPROM's status register. 
+The "wrsr" command write its argument into the EEPROM's status register.
 This can be used to e.g. clear write protect bits.
 
-
 sniff
-The "sniff" command activates the SPI bus sniffing mode. Since I can't 
-verify if it's working or not (seems not to work for me) I'll just not 
+The "sniff" command activates the SPI bus sniffing mode. Since I can't
+verify if it's working or not (seems not to work for me) I'll just not
 write anything here.
