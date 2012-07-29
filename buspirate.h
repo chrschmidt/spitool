@@ -101,8 +101,8 @@ enum BPBINARYCMDS {
 enum BPSPICMDS {
     BPSPIEXIT          = 0x00,
     BPSPIENTER         = 0x01,
-    BPSPICSHI          = 0x02,
-    BPSPICSLO          = 0x03,
+    BPSPICSLO          = 0x02,
+    BPSPICSHI          = 0x03,
     BPSPIWRITEREADCS   = 0x04,
     BPSPIWRITEREADNOCS = 0x05,
     BPSPISNIFFALL      = 0x0d,
@@ -120,10 +120,11 @@ enum BPSPICFG {
     BPSPICFGAUX        = 0x02,
     BPSPICFGPULLUPS    = 0x04,
     BPSPICFGPOWER      = 0x08,
-    BPSPICFGOUTPUT     = 0x10,
-    BPSPICFGIDLE       = 0x20,
-    BPSPICFGCLOCKEDGE  = 0x40,
-    BPSPICFGSAMPLING   = 0x80,
+    BPSPICFGSAMPLING   = 0x10,
+    BPSPICFGCLOCKEDGE  = 0x20,
+    BPSPICFGIDLE       = 0x40,
+    BPSPICFGOUTPUT     = 0x80,
+
     BPSPICFGAUXINPUT   = 0x100,
 
     BPSPISPEED30K      = 0x00,

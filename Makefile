@@ -10,7 +10,7 @@ spitool: $(SOURCES:.c=.o)
 	$(LD) $(LDFLAGS) -o spitool $(SOURCES:.c=.o)
 
 clean:
-	rm -f *.o *.d *~spitool
+	rm -f *.o *.d *~ spitool
 
 %.o: %.c
 	@$(MAKEDEPEND)

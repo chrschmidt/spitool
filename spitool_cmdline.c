@@ -27,7 +27,7 @@
 #include "spitool_cmdline.h"
 
 static const bp_device_t spi_devices [] = {
-    { "list", 0, 0, 0, BPDFDUMMY },
+    { "list",       0, 0,  0, 0, BPDFDUMMY },
     { "M95640*", 8192, 2, 32, 0, BPDFEEPROM }
 };
 
@@ -43,8 +43,8 @@ static int parse_flags (const char * flags, int * output) {
 	printf ("                            @ Input (Z, High Impedance)\n");
 	printf ("  Note: Specifying a or A before @ will define the state during CS toggle\n");
 	printf ("Voltage Regulators Control: v Off                  V On (default)\n");
-	printf ("Pullup Control:             p Off                  P On (default)\n");
-	printf ("Output Level Control:       h 0V/Hi-Z (Default)    H 0V/+3.3V\n");
+	printf ("Pullup Control:             p Off (default)        P On\n");
+	printf ("Output Level Control:       h 0V/Hi-Z              H 0V/+3.3V (default)\n");
 	printf ("CS Pin Control:             c Active Low (default) C Active High\n");
 	printf ("SPI Clock Idle Polarity:    i Low (default)        I High\n");
 	printf ("SPI Sampling Control:       s Middle (default)     S End\n");
@@ -70,7 +70,9 @@ static int parse_flags (const char * flags, int * output) {
         case 'S': *output |= BPSPICFGSAMPLING; break;
         case 'v': *output &= ~BPSPICFGPOWER; break;
         case 'V': *output |= BPSPICFGPOWER; break;
-        default: fprintf (stderr, "Invalid flag %c, allowed are [@aAcChHiIoOpPsSvV]\n", *(flags-1)); return 1;
+        default:
+            fprintf (stderr, "Invalid flag %c, allowed are [@aAcChHiIoOpPsSvV]\n", *(flags-1));
+            return 1;
         }
     }
     return 0;
@@ -194,7 +196,7 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
         { "clockspeed", 'c', POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT, &intarg, 'c',
           "SPI clock speed in kHz", "<30, 125, 250, 1000, 2000, 2600, 4000, 8000>" },
         { "flags", 'a', POPT_ARG_STRING, NULL, 'a',
-          "SPI operation flags", "[@aAcChHiIoOpPsSvV]" },
+          "SPI operation flags", "[@aAcChHiIoOpPsSvV|help]" },
         { "port", 'p', POPT_ARG_STRING, NULL, 'p',
           "path to bus pirate serial port's device node", "<string>" },
         { "portspeed", 'P', POPT_ARG_INT, &intarg, 'P',

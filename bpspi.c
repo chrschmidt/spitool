@@ -39,48 +39,46 @@ int bp_spi_enter (bp_state_t * bp) {
     if ((result = serReadTimed (bp->fd, 2000, 4, buffer)) != 4 ||
         strncmp ((char *)buffer, "SPI", 3))
         return 1;
+    bp->submode = BPSMSPI;
     bp->bm_version = buffer[3] - '0';
 
     serWriteChar (bp->fd, BPSPISETSPEED | bp->speed);
     if (serReadCharTimed (bp->fd, 1000000) != 1)
         return 1;
+    /* Set up Hi-Z flag before initial CS setting */
     serWriteChar (bp->fd, BPSPICONFIG2 | ((bp->flags >> 4) & 0xf));
     if (serReadCharTimed (bp->fd, 1000000) != 1)
         return 1;
+    /* Set up power, pullup, initial CS (deactivated) and AUX */
     serWriteChar (bp->fd, BPSPICONFIG1 | ((bp->flags & 0xf) ^ BPSPICFGCS));
     if (serReadCharTimed (bp->fd, 1000000) != 1)
         return 1;
+    /* setting up the outputs forces AUX to output, check if it needs to be changed back */
     if (bp->flags & BPSPICFGAUXINPUT) {
         serWriteChar (bp->fd, BPSPIREADAUX);
         if (serReadCharTimed (bp->fd, 1000000) == -1)
             return 1;
     }
 
-    bp->submode = BPSMSPI;
-
     return 0;
 }
 
-static int set_cs (bp_state_t * bp) {
-    serWriteChar (bp->fd, BPSPICONFIG1 | (bp->flags & 0xf));
-    if (serReadCharTimed (bp->fd, 1000000) != 1)
-        return 1;
-    if (bp->flags & BPSPICFGAUXINPUT) {
-        serWriteChar (bp->fd, BPSPIREADAUX);
-        if (serReadCharTimed (bp->fd, 1000000) == -1)
+static int cs_control (bp_state_t * bp, int state) {
+    if (bp->flags & BPSPICFGOUTPUT) {
+        if (state) serWriteChar (bp->fd, bp->flags & BPSPICFGCS ? BPSPICSHI : BPSPICSLO);
+        else serWriteChar (bp->fd, bp->flags & BPSPICFGCS ? BPSPICSLO : BPSPICSHI);
+        if (serReadCharTimed (bp->fd, 1000000) != 1)
             return 1;
-    }
-    return 0;
-}
-
-static int clear_cs (bp_state_t * bp) {
-    serWriteChar (bp->fd, BPSPICONFIG1 | ((bp->flags & 0xf) ^ BPSPICFGCS));
-    if (serReadCharTimed (bp->fd, 1000000) != 1)
-        return 1;
-    if (bp->flags & BPSPICFGAUXINPUT) {
-        serWriteChar (bp->fd, BPSPIREADAUX);
-        if (serReadCharTimed (bp->fd, 1000000) == -1)
+    } else {
+        if (state) serWriteChar (bp->fd, BPSPICONFIG1 | ((bp->flags & 0xf)));
+        else serWriteChar (bp->fd, BPSPICONFIG1 | ((bp->flags & 0xf) ^ BPSPICFGCS));
+        if (serReadCharTimed (bp->fd, 1000000) != 1)
             return 1;
+        if (bp->flags & BPSPICFGAUXINPUT) {
+            serWriteChar (bp->fd, BPSPIREADAUX);
+            if (serReadCharTimed (bp->fd, 1000000) == -1)
+                return 1;
+        }
     }
     return 0;
 }
@@ -96,15 +94,19 @@ int bp_spi_command (bp_state_t * bp, int writelen, int readlen, uint8_t * buffer
     if (bp->bm_version != 1)
         return 2;
 
-    if (set_cs (bp))
-        return 3;
+    if (bp->flags & BPSPICFGCS || !(bp->flags & BPSPICFGOUTPUT)) {
+        if (cs_control (bp, 1))
+            return 3;
+        serWriteChar (bp->fd, BPSPIWRITEREADNOCS);
+    } else {
+        serWriteChar (bp->fd, BPSPIWRITEREADCS);
+    }
 
-    serWriteChar (bp->fd, BPSPIWRITEREADNOCS);
     serWriteChar (bp->fd, (writelen >> 8) & 0xff);
     serWriteChar (bp->fd, writelen        & 0xff);
     serWriteChar (bp->fd, (readlen >> 8)  & 0xff);
     serWriteChar (bp->fd, readlen         & 0xff);
-// Errors happen right after sending the length... check with a short timeout
+/* Errors happen right after sending the length... check with a short timeout */
     if ((result = serReadCharTimed (bp->fd, 10000)) != 0) {
         if (writelen)
             serWrite (bp->fd, writelen, buffer);
@@ -112,7 +114,8 @@ int bp_spi_command (bp_state_t * bp, int writelen, int readlen, uint8_t * buffer
             result = serReadTimed (bp->fd, 1000000, readlen, buffer);
     }
 
-    clear_cs (bp);
+    if (bp->flags & BPSPICFGCS || !(bp->flags & BPSPICFGOUTPUT))
+        cs_control (bp, 0);
 
     if (result == readlen)
         return 0;

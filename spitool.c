@@ -326,7 +326,7 @@ int main (int argc, const char ** argv) {
         .speed = 1000,
         .devicename = "/dev/ttyUSB0",
         .devicerate = B115200,
-        .flags = BPSPICFGAUX | BPSPICFGPULLUPS | BPSPICFGPOWER | BPSPICFGCLOCKEDGE
+        .flags = BPSPICFGAUX | BPSPICFGOUTPUT | BPSPICFGPOWER | BPSPICFGCLOCKEDGE
     };
     spitool_action_t * action;
 
