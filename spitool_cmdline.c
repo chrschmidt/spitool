@@ -131,7 +131,8 @@ static char * make_commandlist (const spitool_command_t * commands,
                                 const char * prefix, const char * postfix) {
     int i, length = 0;
     char * buffer;
-    const char argstr[] = "argument";
+    const char argstr[] = "<argument>";
+    const char optargstr[] = "[argument]";
 
     if (prefix)
         length += strlen (prefix) + 1;
@@ -142,6 +143,8 @@ static char * make_commandlist (const spitool_command_t * commands,
         length += strlen (commands[i].commandname) + 1;
         if (commands[i].flags & CFNEEDARG)
             length += strlen (argstr) + 1;
+        if (commands[i].flags & CFOPTARG)
+            length += strlen (optargstr) + 1;
     }
 
     if (!(buffer = malloc (length)))
@@ -157,6 +160,10 @@ static char * make_commandlist (const spitool_command_t * commands,
         if (commands[i].flags & CFNEEDARG) {
             strcat (buffer, " ");
             strcat (buffer, argstr);
+        }
+        if (commands[i].flags & CFOPTARG) {
+            strcat (buffer, " ");
+            strcat (buffer, optargstr);
         }
     }
     if (postfix)
@@ -269,13 +276,16 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
         goto errout;
     }
 
-    if (action->command->flags & CFNEEDARG && !action->filename) {
+    if (action->command->flags & CFNEEDARG) {
         action->arg = poptGetArg (optcon);
         if (!action->arg) {
             fprintf (stderr, "Command %s needs an argument, but none supplied.\n",
                      action->command->commandname);
             goto errout;
         }
+    }
+    if (action->command->flags & CFOPTARG) {
+        action->arg = poptGetArg (optcon);
     }
     if (action->command->flags & CFNEEDDS && !action->device.capacity) {
         fprintf (stderr, "Command %s needs device capacity information.\n",

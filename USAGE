@@ -1,6 +1,6 @@
 Some notes on the usage of this spitool.
 
-Usage: spitool <dump|program|update|verify|wipe|rdsr|wrsr argument|sniff>
+Usage: spitool <dump|program|update|wipe [argument]|verify|rdsr|wrsr <argument>|sniff>
   -c, --clockspeed=INT                     SPI clock speed in kHz
   -a, --flags=[@aAcChHiIoOpPsSvV|help]     SPI operation flags
   -p, --port=<string>                      path to bus pirate serial port's
@@ -117,19 +117,21 @@ update
 The "update" command behaves just like the "program" command, just that
 it reads the original EEPROM content and only writes data that differs.
 
+wipe
+The "wipe" command initializes the full EEPROM to an (optional) given
+value in the range of 0 to 255. If no value is given, 255 (0xFF) is 
+used.
+
 verify
 The "verify" command compares the EEPROM content with the first 
 <devicesize> bytes of the given file.
-
-wipe
-The "wipe" command initializes the full EEPROM to 255 (0xFF).
 
 rdsr
 The "rdsr" command reads the EEPROM's status register. This can be
 useful to test e.g. if write protect bits are on.
 
 wrsr
-The "wrsr" command write its argument into the EEPROM's status register.
+The "wrsr" command writes its argument into the EEPROM's status register.
 This can be used to e.g. clear write protect bits.
 
 sniff

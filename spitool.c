@@ -145,7 +145,7 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     int i, j;
     int update;
     int mode = 0;
-    uint8_t wipeval = 0xff;
+    unsigned long wipeval = 0xff;
     const char modes[3][9] = {"Writing", "Updating", "Wiping"};
 
     if (!strcmp (action->command->commandname, "update")) mode = 1;
@@ -162,9 +162,16 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     if (mode == 2) {
         buffer1 = buffer2;
         buffer2 = NULL;
+        if (action->arg) {
+            wipeval = strtoul (action->arg, NULL, 0);
+            if (errno || wipeval > 255) {
+                fprintf (stderr, "Parameter %s is invalid for wipe.\n", action->arg);
+                return 1;
+            }
+        }
     }
 
-    printf ("Writing EEPROM...\n"); fflush (stdout);
+    printf ("%s EEPROM...\n", modes[mode]); fflush (stdout);
     for (i=0; i<action->device.capacity; i+=action->device.sectorsize) {
         switch (mode) {
         case 0:
@@ -284,7 +291,7 @@ const spitool_command_t commands [] = {
     { "dump", spitool_dump, CFNEEDAS | CFNEEDDS },
     { "program", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
     { "update", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
-    { "wipe", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS },
+    { "wipe", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFOPTARG },
     { "verify", spitool_verify, CFNEEDAS | CFNEEDDS | CFNEEDFILE },
     { "rdsr", spitool_rdsr, 0 },
     { "wrsr", spitool_wrsr, CFNEEDARG },
