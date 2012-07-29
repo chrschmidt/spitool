@@ -140,34 +140,13 @@ static int spitool_verify (bp_state_t * bp, spitool_action_t * action) {
 }
 
 static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
-    uint8_t * buffer;
-    size_t result;
-
-    if (!(buffer = _spitool_read_file (bp, action)))
-        return 1;
-
-    printf ("Writing EEPROM..."); fflush (stdout);
-    if ((result = bp_spi_eeprom_write (bp, action->start, action->length,
-                                       action->device.addresslength,
-                                       action->device.sectorsize, buffer)))
-        printf (" Failed.\n");
-    else
-        printf (" Success.\n");
-
-    if (!result && action->verify)
-        result = _spitool_verify (bp, action, buffer);
-
-    free (buffer);
-    if (result)
-        return 1;
-    return 0;
-}
-
-static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
-    uint8_t * buffer1, * buffer2 = NULL;
+    uint8_t * buffer1 = NULL, * buffer2 = NULL;
     size_t result = 0;
     int i, j;
     int update;
+    int mode = 0;
+
+    if (!strcmp (action->command->commandname, "update")) mode = 1;
 
     if (!(buffer1 = _spitool_read_file (bp, action)))
         return 1;
@@ -178,15 +157,23 @@ static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
 
     printf ("Writing EEPROM...\n"); fflush (stdout);
     for (i=0; i<action->device.capacity; i+=action->device.sectorsize) {
-        update = 0;
-        for (j=0; j<action->device.sectorsize; j++) {
-            if (buffer1 [i+j] != buffer2 [i+j]) {
-                update = 1;
-                break;
+        switch (mode) {
+        case 0:
+            update = 1;
+            break;
+        case 1:
+            update = 0;
+            for (j=0; j<action->device.sectorsize; j++) {
+                if (buffer1 [i+j] != buffer2 [i+j]) {
+                    update = 1;
+                    break;
+                }
             }
+            break;
         }
         if (update) {
-            printf ("Updating sector %d...", i/action->device.sectorsize); fflush (stdout);
+            printf ("  %s sector %d...", mode ? "Updating" : "Writing",
+                                       i/action->device.sectorsize); fflush (stdout);
             if ((result = bp_spi_eeprom_write (bp, i, action->device.sectorsize,
                                                action->device.addresslength,
                                                action->device.sectorsize, buffer1+i)))
@@ -194,13 +181,14 @@ static int spitool_update (bp_state_t * bp, spitool_action_t * action) {
             printf ("\n");
         }
     }
-    printf ("Done.\n");
+    if (result) printf ("Failed.\n");
+    else printf ("Done.\n");
 
     if (!result && action->verify)
         result = _spitool_verify (bp, action, buffer1);
 
-    free (buffer1);
     free (buffer2);
+    free (buffer1);
     if (result)
         return 1;
     return 0;
@@ -312,7 +300,7 @@ static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
 const spitool_command_t commands [] = {
     { "dump", spitool_dump, CFNEEDAS | CFNEEDDS },
     { "program", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
-    { "update", spitool_update, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
+    { "update", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
     { "verify", spitool_verify, CFNEEDAS | CFNEEDDS | CFNEEDFILE },
     { "wipe", spitool_wipe, CFNEEDAS | CFNEEDDS | CFNEEDSS },
     { "rdsr", spitool_rdsr, 0 },
