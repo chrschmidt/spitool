@@ -1,0 +1,139 @@
+Some notes on the usage of this spitool.
+
+Usage: spitool <dump|program|update|verify|wipe|rdsr|wrsr argument|sniff>
+  -c, --clockspeed=INT                     SPI clock speed in kHz
+  -a, --flags=[@aAcChHiIoOpPsSvV|help]     SPI operation flags
+  -p, --port=<string>                      path to bus pirate serial port's
+                                           device node
+  -P, --portspeed=<1..4>                   Extended serial port speed
+  -f, --filename=<string>                  file to read/write data to
+  -d, --device=<string|list>               devicetype that is connected
+      --as=<integer>                       device address length in bytes
+      --ds=<integer>                       device size in bytes
+      --ss=<integer>                       device sector size in bytes
+  -v, --verify                             verify after write
+
+Help options:
+  -?, --help                               Show this help message
+      --usage                              Display brief usage message
+
+
+Serial port setup
+=================
+
+The serial port setup has two options, -p/--port and -P/--portspeed.
+
+The first receives a string which is the name of the serial associated 
+with the bus pirate. It defaults to /dev/ttyUSB0, and thus is optional
+if it already matches what your bus pirate receives.
+
+The --portspeed options takes a value between 1 and 4 as an extended
+serial port speed. The values translate as follows:
+1: 230400 bps
+2: 460800 bps
+3: 1000000 bps
+4: 2000000 bps
+The last two should be very stable, since the deviation of the clock 
+speeds of the USB-to-Serial converter chip and the Microcontroller's 
+UART are zero. Take into account that the setup takes some time and
+can easily void the potential gains from higher clock speeds.
+
+The default is to stay at the initial 115200 bps.
+
+Generic SPI setup
+=================
+
+The SPI setup has two options, -c/--clockspeed and -a/--flags.
+
+The first parameter is the SPI clock rate. Valid values are 30, 125, 
+250, 1000, 2000, 2600 (2666), 4000, 8000. These values reflect the 
+resulting SPI clock in kHz. The default is 1000.
+Note that in my tests for no reason at all bitrates turn out slower 
+after the 2000...
+
+The flags control the other aspects of the SPI communication. The 
+details can be retrieved with -a help or --flags=help:
+
+AUX Pin Control:            a Output Low (0)       A Output High (1) 
+(default)
+                            @ Input (Z, High Impedance)
+  Note: Specifying a or A before @ will define the state during CS 
+toggle
+Voltage Regulators Control: v Off                  V On (default)
+Pullup Control:             p Off (default)        P On
+Output Level Control:       h 0V/Hi-Z              H 0V/+3.3V (default)
+CS Pin Control:             c Active Low (default) C Active High
+SPI Clock Idle Polarity:    i Low (default)        I High
+SPI Sampling Control:       s Middle (default)     S End
+SPI Output Clock Edge:      o Idle to Active       O Active to Idle (default)
+
+To summarize the defaults: AUX is driven high, Power is on, Pullup 
+resistors are off, output is active 0V/3.3V, the CS pin is active low, 
+the clock idles at low, input is sampled in the middle of a clock cycle, 
+and output changes on active to idle clock transition.
+
+Device setup
+============
+
+This tool currently is meant to read and write EEPROMs. This is done 
+with three specific parameters:
+
+--as for the number of address bytes for a command. If not specified, 
+this is guessed from the device capacity:
+1 for devices up to 256 bytes,
+2 for devices from 257 to 64k bytes,
+3 for devices from 64k+1 to 16M bytes,
+4 for everything else.
+Use --as if your devices deviates from this rule.
+
+--ds is the device size in bytes. No k/M shortcuts at the moment, sorry.
+
+--ss is the sector size in bytes. This is needed for write operations, 
+since you can only write full sectors at once.
+
+If your device is hardcoded in the device table, you can use -d 
+<devicename>. Use -d list to list currently supported devices, and send 
+me the data if yours is not there ;)
+
+Other optional parameters
+=========================
+-v, --verify   Verify the EEPROM contents after writing.
+-f, --filename Read the data from file / write the data to a file
+
+Commands
+========
+
+dump
+The "dump" command reads the device and writes it to a file if a 
+filename is given, or as a hexdump to stdout.
+
+program
+The "program" command reads a file and writes its contents to the 
+EEPROM. Only the first <devicesize> bytes are used. Optionally, the 
+content can be automatically verified after programming. Note that the 
+full EEPROM is written!
+
+update
+The "update" command behaves just like the "program" command, just that 
+it reads the original EEPROM content and only writes data that differs.
+
+verify
+The "verify" command compares the EEPROM content with the first 
+<devicesize> bytes of the given file.
+
+wipe
+The "wipe" command initializes the full EEPROM to 255 (0xFF).
+
+rdsr
+The "rdsr" command reads the EEPROM's status register. This can be 
+useful to test e.g. if write protect bits are on.
+
+wrsr
+The "wrsr" command write its argument into the EEPROM's status register. 
+This can be used to e.g. clear write protect bits.
+
+
+sniff
+The "sniff" command activates the SPI bus sniffing mode. Since I can't 
+verify if it's working or not (seems not to work for me) I'll just not 
+write anything here.
