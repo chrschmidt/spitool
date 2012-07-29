@@ -141,18 +141,27 @@ static int spitool_verify (bp_state_t * bp, spitool_action_t * action) {
 
 static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     uint8_t * buffer1 = NULL, * buffer2 = NULL;
-    size_t result = 0;
+    int result = 0;
     int i, j;
     int update;
     int mode = 0;
+    uint8_t wipeval = 0xff;
+    const char modes[3][9] = {"Writing", "Updating", "Wiping"};
 
     if (!strcmp (action->command->commandname, "update")) mode = 1;
+    else if (!strcmp (action->command->commandname, "wipe")) mode = 2;
 
-    if (!(buffer1 = _spitool_read_file (bp, action)))
+    // source file is only needed for mode 0/1 (write/update)
+    if (mode < 2 && !(buffer1 = _spitool_read_file (bp, action)))
         return 1;
-    if (!(buffer2 = _spitool_read_eeprom (bp, action))) {
+    // current eeprom content is only needed for mode 1/2 (update/wipe)
+    if (mode > 0 && !(buffer2 = _spitool_read_eeprom (bp, action))) {
         free (buffer1);
         return 1;
+    }
+    if (mode == 2) {
+        buffer1 = buffer2;
+        buffer2 = NULL;
     }
 
     printf ("Writing EEPROM...\n"); fflush (stdout);
@@ -162,9 +171,12 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
             update = 1;
             break;
         case 1:
+        case 2:
             update = 0;
             for (j=0; j<action->device.sectorsize; j++) {
-                if (buffer1 [i+j] != buffer2 [i+j]) {
+                if (buffer1 [i+j] != ((mode == 1) ? buffer2 [i+j] : wipeval)) {
+                    if (mode == 2)
+                        memset (buffer1+i, wipeval, action->device.sectorsize);
                     update = 1;
                     break;
                 }
@@ -172,7 +184,7 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
             break;
         }
         if (update) {
-            printf ("  %s sector %d...", mode ? "Updating" : "Writing",
+            printf ("  %s sector %d...", modes[mode],
                                        i/action->device.sectorsize); fflush (stdout);
             if ((result = bp_spi_eeprom_write (bp, i, action->device.sectorsize,
                                                action->device.addresslength,
@@ -191,35 +203,6 @@ static int spitool_program (bp_state_t * bp, spitool_action_t * action) {
     free (buffer1);
     if (result)
         return 1;
-    return 0;
-}
-
-static int spitool_wipe (bp_state_t * bp, spitool_action_t * action) {
-    uint8_t * buffer;
-    int i, j;
-    int erase;
-
-    if (!(buffer = _spitool_read_eeprom (bp, action)))
-        return 1;
-
-    for (i=0; i<action->device.capacity; i+=action->device.sectorsize) {
-        erase = 0;
-        for (j=0; j<action->device.sectorsize; j++) {
-            if (buffer [i+j] != 0xFF) {
-                erase = 1;
-                break;
-            }
-        }
-        if (erase) {
-            printf ("Erasing sector %d...", i/action->device.sectorsize);
-            memset (buffer+i, 0xFF, action->device.sectorsize);
-            bp_spi_eeprom_write (bp, i, action->device.sectorsize, action->device.addresslength,
-                                 action->device.sectorsize, buffer+i);
-            printf ("\n");
-        }
-    }
-
-    free (buffer);
     return 0;
 }
 
@@ -301,8 +284,8 @@ const spitool_command_t commands [] = {
     { "dump", spitool_dump, CFNEEDAS | CFNEEDDS },
     { "program", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
     { "update", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS | CFNEEDFILE },
+    { "wipe", spitool_program, CFNEEDAS | CFNEEDDS | CFNEEDSS },
     { "verify", spitool_verify, CFNEEDAS | CFNEEDDS | CFNEEDFILE },
-    { "wipe", spitool_wipe, CFNEEDAS | CFNEEDDS | CFNEEDSS },
     { "rdsr", spitool_rdsr, 0 },
     { "wrsr", spitool_wrsr, CFNEEDARG },
     { "sniff", spitool_sniff, 0 },
