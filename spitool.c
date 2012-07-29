@@ -31,9 +31,18 @@
 #include "spitool_cmdline.h"
 
 void hexdump (int length, uint8_t * buffer) {
-    int i;
-    for (i=0; i<length; i++)
-        printf ("%02X%c", buffer[i], i%32==31||i==length-1?'\n':' ');
+    int i, j;
+
+    for (i=0; i<length; i+=16) {
+        for (j=0; i+j<length && j<16; j++)
+            printf ("%02X ", buffer[i+j]);
+        if (j<16)
+            for (; j<16; j++)
+                printf ("   ");
+        for (j=0; i+j<length && j<16; j++)
+            printf ("%c", buffer[i+j]>=32 && buffer[i+j]<127 ? buffer[i+j] : '.');
+        printf ("\n");
+    }
 }
 
 static int spitool_dump (bp_state_t * bp, spitool_action_t * action) {
