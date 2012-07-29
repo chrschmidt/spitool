@@ -105,7 +105,8 @@ int bp_open (bp_state_t * bp) {
 
 int bp_reset (bp_state_t * bp) {
     int i, result;
-    char buffer [256];
+    char buffer[256];
+    char temp[3][16];
     int s[5];
     int is_reset = 0;
 
@@ -133,11 +134,16 @@ int bp_reset (bp_state_t * bp) {
             if (strstr (buffer, "Bus Pirate"))
                 is_reset = 1;
             if (sscanf (buffer, "Bus Pirate v%d.%d", &s[0], &s[1]) == 2)
-                bp->hw_version = 10*s[0]+s[1];
-            else if (sscanf (buffer, "Firmware v%d.%d r%d  Bootloader v%d.%d",
-                             &s[0], &s[1], &s[2], &s[3], &s[4])) {
-                bp->sw_version = 10*s[0]+s[1];
-                bp->bl_version = 10*s[3]+s[4];
+                bp->hw_version = 100*s[0]+s[1];
+            else if (sscanf (buffer, "Firmware v%15s r%15s  Bootloader v%15s",
+                             temp[0], temp [1], temp[2]) == 3) {
+                if (sscanf (temp[0], "%d.%d", &s[0], &s[1]) == 2 &&
+                    sscanf (temp[1], "%d", &s[2]) == 1 &&
+                    sscanf (temp[2], "%d.%d", &s[3], &s[4]) == 2) {
+                    bp->sw_version = 100*s[0]+s[1];
+                    bp->sw_revision = s[2];
+                    bp->bl_version = 100*s[3]+s[4];
+                }
             }
         }
 

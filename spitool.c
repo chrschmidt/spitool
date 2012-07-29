@@ -343,10 +343,11 @@ int main (int argc, const char ** argv) {
     action = parse_commandline (argc, argv, commands, &bp);
 
     if (action && !bp_open (&bp)) {
-        printf ("Bus Pirate V%d.%d, Firmware %d.%d, Bootloader %d.%d found.\n",
-                bp.hw_version/10, bp.hw_version%10,
-                bp.sw_version/10, bp.sw_version%10,
-                bp.bl_version/10, bp.bl_version%10);
+        printf ("Bus Pirate %d.%d, Firmware %d.%d (r%d), Bootloader %d.%d found.\n",
+                bp.hw_version/100, bp.hw_version%100,
+                bp.sw_version/100, bp.sw_version%100,
+                bp.sw_revision,
+                bp.bl_version/100, bp.bl_version%100);
 
         if (bp_spi_enter (&bp))
             return 1;

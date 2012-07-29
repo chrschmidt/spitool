@@ -48,6 +48,7 @@ typedef struct bp_state_s {
     int bm_version;
     int hw_version;
     int sw_version;
+    int sw_revision;
     int bl_version;
 } bp_state_t;
 
