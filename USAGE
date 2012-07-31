@@ -135,6 +135,27 @@ The "wrsr" command writes its argument into the EEPROM's status register.
 This can be used to e.g. clear write protect bits.
 
 sniff
-The "sniff" command activates the SPI bus sniffing mode. Since I can't
-verify if it's working or not (seems not to work for me) I'll just not
-write anything here.
+The "sniff" command activates the SPI bus sniffing mode. It will put
+the bus pirate into sniffing mode and print out logged data.
+A typical display looks like this:
+
+CS Switched to low
+'.' 03   3 - '.' 00   0
+'.' 1F  31 - '.' 00   0
+'.' 00   0 - '.' 00   0
+'.' 00   0 - 'H' 48  72
+'.' 00   0 - '0' 30  48
+'.' 00   0 - '2' 32  50
+'.' 00   0 - '.' 00   0
+CS Switched to high
+
+The display shows two bytes per line. Since in SPI you can't tell the
+direction of communication (only the partners will know, or the reader
+if he knows who is master and who is slave plus the command flow) the
+Bus Pirate samples both the MOSI and the MISO line independently at
+each clock. The spitool show both values, first the MOSI and then the
+MISO value, eash as printable ASCII (if the value is between 32 and
+126, inclusive), as hexadecimal and as decimal value.
+The above example shows an EEPROM read with two address bytes on the
+MOSI line, then four values being clocked out from the EEPROM on the
+MISO line.
