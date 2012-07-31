@@ -276,8 +276,8 @@ static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
                 case '\\':
                     result = serReadTimed (bp->fd, 10000, 2, buffer);
                     printf ("'%c' %02X %3d - '%c' %02X %3d\n",
-                            buffer[0]>=32 && buffer[0]<=127 ? buffer[0] : '.', buffer[0], buffer[0],
-                            buffer[1]>=32 && buffer[1]<=127 ? buffer[1] : '.', buffer[1], buffer[1]);
+                            buffer[0]>=32 && buffer[0]<127 ? buffer[0] : '.', buffer[0], buffer[0],
+                            buffer[1]>=32 && buffer[1]<127 ? buffer[1] : '.', buffer[1], buffer[1]);
                     break;
                 }
             }
