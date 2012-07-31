@@ -15,6 +15,11 @@ This spitool can
 - wipe an EEPROM (initialize with a constant value)
 - read and write the status word
 - can run the serial port at extended speeds of 230400, 460800, 1M and 2M baud
-- in theory, it can log SPI traffic (though I only had limited success)
+- log SPI traffic
+
+Due to some bugfixes the "spifix" branch of firmware 6.2 is recommended, see
+http://dangerousprototypes.com/forum/viewtopic.php?f=4&t=4340#p42691
+This will be needed to drive SPI at clock rates > 2MHz, and for working 
+sniffing.
 
 spitool requires popt as only external dependency.

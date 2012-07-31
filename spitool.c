@@ -242,15 +242,15 @@ static int spitool_wrsr (bp_state_t * bp, spitool_action_t * action) {
 }
 
 static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
-    uint8_t buffer [5];
     int result;
+    uint8_t buffer[2];
     fd_set set;
     struct termio orig, new;
 
 /*    if (!(buffer = malloc (1<<20)))
         return 1;
 */
-    serWriteChar (bp->fd, BPSPISNIFFALL);
+    serWriteChar (bp->fd, BPSPISNIFFCSLO);
     result = serReadCharTimed (bp->fd, 10000);
     if (result == 1) {
         ioctl (STDIN_FILENO, TCGETA, &orig);
@@ -265,17 +265,30 @@ static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
             FD_SET (STDIN_FILENO, &set);
             result = select (bp->fd+1, &set, NULL, NULL, NULL);
             if (FD_ISSET (bp->fd, &set)) {
-                result = serReadTimed (bp->fd, 10000, 5, buffer);
-                printf ("%c%c '%c' %02X %3d - '%c' %02X %3d %c\n",
-                        buffer[0], buffer[1],
-                        buffer[2]>=32 && buffer[2]<=127 ? buffer[2] : '.', buffer[2], buffer[2],
-                        buffer[3]>=32 && buffer[3]<=127 ? buffer[3] : '.', buffer[3], buffer[3],
-                        buffer[4]);
+                result = serReadCharTimed (bp->fd, 10000);
+                switch (result) {
+                case '[':
+                    printf ("CS Switched to low\n");
+                    break;
+                case ']':
+                    printf ("CS Switched to high\n");
+                    break;
+                case '\\':
+                    result = serReadTimed (bp->fd, 10000, 2, buffer);
+                    printf ("'%c' %02X %3d - '%c' %02X %3d\n",
+                            buffer[0]>=32 && buffer[0]<=127 ? buffer[0] : '.', buffer[0], buffer[0],
+                            buffer[1]>=32 && buffer[1]<=127 ? buffer[1] : '.', buffer[1], buffer[1]);
+                    break;
+                }
             }
-        } while (!FD_ISSET (STDIN_FILENO, &set));
+        } while (result >= 0 && !FD_ISSET (STDIN_FILENO, &set));
         serWriteChar (bp->fd, 0);
         getchar ();
         ioctl (STDIN_FILENO, TCSETA, &orig);
+        if (result >= 0)
+            result = 0;
+        else
+            result = 1;
     } else {
         result = 1;
     }
