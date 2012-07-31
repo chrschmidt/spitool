@@ -268,10 +268,10 @@ static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
                 result = serReadCharTimed (bp->fd, 10000);
                 switch (result) {
                 case '[':
-                    printf ("CS Switched to low\n");
+                    printf ("CS switched to low\n");
                     break;
                 case ']':
-                    printf ("CS Switched to high\n");
+                    printf ("CS switched to high\n");
                     break;
                 case '\\':
                     result = serReadTimed (bp->fd, 10000, 2, buffer);
