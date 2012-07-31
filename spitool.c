@@ -258,7 +258,7 @@ static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
         new.c_lflag &= ~ECHO & ~ICANON;
         ioctl (STDIN_FILENO, TCSETA, &new);
         result = 0;
-        printf ("Press any key to abort\n");
+        printf ("Sniffing started, press any key to abort\n");
         do {
             FD_ZERO (&set);
             FD_SET (bp->fd, &set);
