@@ -28,6 +28,8 @@
 
 static const bp_device_t spi_devices [] = {
     { "list",       0, 0,  0, 0, BPDFDUMMY },
+    { "M95160*", 2048, 2, 32, 0, BPDFEEPROM },
+    { "M95320*", 4096, 2, 32, 0, BPDFEEPROM },
     { "M95640*", 8192, 2, 32, 0, BPDFEEPROM }
 };
 
@@ -294,7 +296,7 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
     }
     if (action->command->flags & CFNEEDAS && !action->device.addresslength) {
         if (!action->device.capacity) {
-            fprintf (stderr, "Command %s needs SPI address length information, and no capacity given.\n",
+            fprintf (stderr, "Command %s needs SPI address length information, and neither length nor capacity given.\n",
                      action->command->commandname);
             goto errout;
         }

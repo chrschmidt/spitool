@@ -24,14 +24,14 @@
 #include "buspirate.h"
 
 enum BPSPIEEPROMCMDS {
-    /* Basic Commands - M95640* */
+    /* Basic Commands - M95** */
     WRSR     = 0x01,
     WRITE    = 0x02,
     READ     = 0x03,
     WRDI     = 0x04,
     RDSR     = 0x05,
     WREN     = 0x06,
-    /* Extended Command - M95640DR* */
+    /* Extended Command - M95*DR* */
     WRIDPAGE = 0x82,
     RDIDPAGE = 0x83
 };

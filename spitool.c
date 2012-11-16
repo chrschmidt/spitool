@@ -25,10 +25,18 @@
 #include <fnmatch.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 
 #include "serial.h"
 #include "buspirate.h"
 #include "spitool_cmdline.h"
+
+static bp_state_t bp = {
+    .speed = 1000,
+    .devicename = "/dev/ttyUSB0",
+    .devicerate = B115200,
+    .flags = BPSPICFGAUX | BPSPICFGOUTPUT | BPSPICFGPOWER | BPSPICFGCLOCKEDGE
+};
 
 static void hexdump (int length, uint8_t * buffer) {
     int i, j;
@@ -280,6 +288,7 @@ static int spitool_sniff (bp_state_t * bp, spitool_action_t * action) {
                             buffer[1]>=32 && buffer[1]<127 ? buffer[1] : '.', buffer[1], buffer[1]);
                     break;
                 }
+                fflush (stdout);
             }
         } while (result >= 0 && !FD_ISSET (STDIN_FILENO, &set));
         serWriteChar (bp->fd, 0);
@@ -313,12 +322,6 @@ const spitool_command_t commands [] = {
 };
 
 int main (int argc, const char ** argv) {
-    bp_state_t bp = {
-        .speed = 1000,
-        .devicename = "/dev/ttyUSB0",
-        .devicerate = B115200,
-        .flags = BPSPICFGAUX | BPSPICFGOUTPUT | BPSPICFGPOWER | BPSPICFGCLOCKEDGE
-    };
     spitool_action_t * action;
 
     action = parse_commandline (argc, argv, commands, &bp);
