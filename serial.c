@@ -34,8 +34,8 @@ int serOpenPort (const char *devicename, tcflag_t rate) {
 
     fd = open(devicename, O_RDWR | O_NOCTTY);
     if (fd < 0) {
-	perror("open");
-	return -1;
+        perror("open");
+        return -1;
     }
 
     // set new port settings for canonical input processing
@@ -46,8 +46,8 @@ int serOpenPort (const char *devicename, tcflag_t rate) {
     newtio.c_cc[VTIME] = 1;
     tcflush(fd, TCIFLUSH);
     if (tcsetattr(fd, TCSANOW, &newtio)) {
-	perror("tcsetattr");
-	return -1;
+        perror("tcsetattr");
+        return -1;
     }
     return fd;
 }
@@ -84,12 +84,12 @@ int serReadTimed (int fd, int timeout, int len, uint8_t *buf) {
     int total = 0, result;
 
     do {
-	FD_ZERO(&set);
-	FD_SET(fd, &set);
-	tv.tv_sec = timeout / 1000000;
-	tv.tv_usec = timeout % 1000000;
-	result = select (fd + 1, &set, NULL, NULL, &tv);
-	switch (result) {
+        FD_ZERO(&set);
+        FD_SET(fd, &set);
+        tv.tv_sec = timeout / 1000000;
+        tv.tv_usec = timeout % 1000000;
+        result = select (fd + 1, &set, NULL, NULL, &tv);
+        switch (result) {
         case -1: // Error
             perror ("select");
             return -1;
@@ -126,7 +126,7 @@ int serReadLine (int fd, int maxlen, char *line) {
 
     do {
         result = serRead (fd, 1, &inputChar);
-	switch (result) {
+        switch (result) {
         case -1: // Error
             return -1;
         case 0: // Timeout
@@ -148,7 +148,7 @@ int serReadLine (int fd, int maxlen, char *line) {
                     finished = 1;
             }
             break;
-	}
+        }
     } while (!finished);
 
     return strlen(line);
