@@ -27,10 +27,11 @@
 #include "spitool_cmdline.h"
 
 static const bp_device_t spi_devices [] = {
-    { "list",       0, 0,  0, 0, BPDFDUMMY },
-    { "M95160*", 2048, 2, 32, 0, BPDFEEPROM },
-    { "M95320*", 4096, 2, 32, 0, BPDFEEPROM },
-    { "M95640*", 8192, 2, 32, 0, BPDFEEPROM }
+    { "list",        0, 0,  0, 0, BPDFDUMMY },
+    { "M95160*",  2048, 2, 32, 0, BPDFEEPROM },
+    { "M95320*",  4096, 2, 32, 0, BPDFEEPROM },
+    { "M95640*",  8192, 2, 32, 0, BPDFEEPROM }
+    { "M95256*", 32768, 2, 32, 0, BPDFEEPROM }
 };
 
 #ifndef ARRAY_SIZE
