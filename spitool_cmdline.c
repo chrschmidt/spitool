@@ -237,7 +237,7 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
 
     optcon = poptGetContext (NULL, argc, argv, cmdlineopts, 0);
 
-    if (commandlist);
+    if (commandlist)
         poptSetOtherOptionHelp (optcon, commandlist);
 
     while ((c = poptGetNextOpt (optcon)) >= 0) {
@@ -301,8 +301,8 @@ spitool_action_t * parse_commandline (int argc, const char ** argv,
             goto errout;
         }
         if (action->device.capacity < 257) action->device.addresslength = 1;
-        else if (!action->device.capacity < 65537) action->device.addresslength = 2;
-        else if (!action->device.capacity < 16777216) action->device.addresslength = 3;
+        else if (!(action->device.capacity < 65537)) action->device.addresslength = 2;
+        else if (!(action->device.capacity < 16777216)) action->device.addresslength = 3;
         else action->device.addresslength = 4;
     }
     if (action->command->flags & CFNEEDFILE && !action->filename) {
